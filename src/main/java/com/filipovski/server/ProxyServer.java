@@ -18,7 +18,7 @@ public class ProxyServer {
 				.childHandler(new ProxyServerInitializer());
 			
 			// Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind("localhost", 6665).sync(); // (7)
+            ChannelFuture f = b.bind("localhost", 6555).sync(); // (7)
     
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
