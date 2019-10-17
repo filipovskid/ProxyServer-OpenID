@@ -33,16 +33,13 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 	private boolean tunneled;
 
 	public ProxyFrontendHandler(Connection connection, Channel outboundChannel) {
-		System.out.println("MAKE FRONTEND");
 		this.connection = connection;
 		this.outboundChannel = outboundChannel;
 		tunneled = outboundChannel == null ? false : true;
-		System.out.println("tunneled: " + tunneled);
 	}
 
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-		System.out.println("Frontend added !");
 		httpServerCodec = new HttpServerCodec();
 		httpObjectAggregator = new HttpObjectAggregator(1024 * 1024);
 		ctx.pipeline()
@@ -57,7 +54,6 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 			.remove(httpObjectAggregator);
 
 		if (outboundChannel != null) {
-			System.out.println("Channel closed - removed");
 			outboundChannel.close();
 			outboundChannel = null;
 		}
@@ -65,34 +61,20 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-		System.out.println("REQUEST");
-		System.out.println("-> " + request);
-
 		if (!tunneled) {
 			if (request.method() == HttpMethod.CONNECT) {
-				System.out.println("-CONNECT");
 				handleTunnelRequest(ctx, request);
 			} else {
-				System.out.println("-HTTP");
 				handleHttpRequest(ctx, request);
 			}
         } else {
-        	System.out.println("Tunneling");
-//            checkState(outboundChannel != null);
-//            LOGGER.info("[Client ({})] => [Server ({})] : {}",
-//                        connectionInfo.getClientAddr(), connectionInfo.getServerAddr(),
-//                        request);
+        	System.err.println("Tunneling: " + outboundChannel.pipeline());
+        	System.out.println("REQ: " + request);
         	outboundChannel.writeAndFlush(request);
         }
-//		
-//		if(tunneled) {
-//			System.out.println("Tunneling");
-//            outboundChannel.writeAndFlush(request);
-//		}
 	}
 
 	private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) throws UnknownHostException {
-		System.out.println("Handle http request");
 		ResolvedUri resolvedUri = resolveHttpUri(request.uri());
 		Address serverAddress = new Address(resolvedUri.hostname, resolvedUri.port);
 		outboundChannel = createOutboundChannel(ctx, serverAddress).channel();
@@ -101,7 +83,6 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 		newRequest.headers().set(request.headers());
 		newRequest.setUri(request.uri());
 		
-		System.out.println("NO-TLS pipeline: " + ctx.pipeline());
 		outboundChannel.writeAndFlush(newRequest);
 	}
 	
@@ -117,7 +98,6 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 							new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
 					
 					ctx.writeAndFlush(response);
-					System.out.println("Flush OK");
 					
 					Connection newConnection = new Connection(connection.getClientAddress(), serverAddress);
                     ctx.pipeline().replace(ProxyFrontendHandler.this, null, 
@@ -181,7 +161,6 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 		        })
 				.connect(serverAddress.getHost(), serverAddress.getPort());
 		
-		System.out.println(String.format("Server addr: %s : %d", serverAddress.getHost(), serverAddress.getPort()));
 		future.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
