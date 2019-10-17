@@ -37,15 +37,13 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
     	actionNum++;
-        requestOutboundHandler.tryWritingRequests("ActiveOut");
+        requestOutboundHandler.tryWritingRequests();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
     	actionNum++;
-//        delayOutboundHandler.release();
-//        outboundChannel.pipeline().fireUserEventTriggered(new OutboundChannelClosedEvent(connectionInfo, false));
-    }
+  }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
@@ -63,7 +61,7 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     	
     	System.out.println("Write to server !");
     	
-    	inboundChannel.writeAndFlush(ReferenceCountUtil.retain(httpObject));
+    	inboundChannel.writeAndFlush(httpObject); // ReferenceCountUtil.retain(httpObject));
 
 //        if (httpObject instanceof HttpResponse) {
 //            currentRequest = null;
@@ -75,7 +73,7 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     	private PendingWriteQueue requestsQueue;
     	private ChannelHandlerContext handlerContext;
     	
-    	public synchronized void tryWritingRequests(String where) {
+    	public synchronized void tryWritingRequests() {
 
     		if(!handlerContext.channel().isActive() || this.requestsQueue.isEmpty()) {
     			return;
@@ -96,11 +94,12 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     	@Override
 		public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         	actionNum++;
-        	
     		if(msg instanceof FullHttpRequest) {
     			HttpRequest request = (HttpRequest) msg;
     			requestsQueue.add(request, promise);
     		}
+    		
+    		tryWritingRequests();
     	}
     }
 }
