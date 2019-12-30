@@ -21,38 +21,29 @@ import io.netty.channel.ChannelProgressiveFuture;
 import io.netty.channel.ChannelProgressiveFutureListener;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpChunkedInput;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.router.RouteResult;
 import io.netty.handler.codec.http.router.Router;
+import io.netty.util.ReferenceCountUtil;
 
 public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
+	private Connection connection;
 	private HttpServerCodec httpServerCodec;
 	private HttpObjectAggregator httpObjectAggregator;
 	private ChunkedWriteHandler chunkedWriteHandler;
 	private final Router<File> router;
 
-	public HttpRouteHandler(Router<File> router) {
+	public HttpRouteHandler(Connection connection, Router<File> router) {
+		this.connection = connection;
 		this.router = router;
 	}
 
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-		System.out.println("Frontend added !");
 		httpServerCodec = new HttpServerCodec();
 		httpObjectAggregator = new HttpObjectAggregator(1024 * 1024);
 		chunkedWriteHandler = new ChunkedWriteHandler();
@@ -66,15 +57,35 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
 		ctx.pipeline()
 			.remove(httpServerCodec)
-			.remove(httpObjectAggregator);
+			.remove(httpObjectAggregator)
+			.remove(chunkedWriteHandler);
 	}
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+		String host = request.headers().get(HttpHeaderNames.HOST);
+
+		if(Utils.notForLocalServer(host)) {
+//			detachRouteHandler(ctx);
+            ctx.pipeline()
+                    .replace(ctx.name(), "authentication-handler", new AuthenticationHandler());
+			ctx.fireChannelRead(ReferenceCountUtil.retain(request));
+
+			return;
+		}
+
 		RouteResult<File> routeResult = router.route(request.method(), request.uri());
 
 //		prepareLoginHtmlFile(routeResult.target());
 		sendFileResponse(ctx, request, routeResult.target());
+	}
+
+	private void detachRouteHandler(ChannelHandlerContext ctx) {
+		ctx.pipeline()
+				.remove(httpObjectAggregator)
+				.remove(httpServerCodec)
+				.remove(chunkedWriteHandler)
+				.replace(HttpRouteHandler.this, null, new ProxyFrontendHandler(this.connection, null));
 	}
 
 	private void sendFileResponse(ChannelHandlerContext ctx, FullHttpRequest request, File file) throws IOException {

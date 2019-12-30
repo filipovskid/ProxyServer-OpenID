@@ -48,7 +48,6 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
 		if (connection.getServerAddress().getPort() == 443) {
 			SslHandler sslHandler = sslCtx().newHandler(ctx.alloc());
 			
-			
 			ctx.pipeline()
 				.addBefore(ctx.name(), "sslHandler", sslHandler);
 			configureHttpHandlers(ctx, 

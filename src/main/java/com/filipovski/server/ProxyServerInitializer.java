@@ -28,9 +28,11 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 		ch.pipeline()
 //			.addLast(new HttpServerCodec())
 //			.addLast(new HttpObjectAggregator(1024 * 1024))
-			.addLast(new ProxyFrontendHandler(connection, null));
+//			.addLast(new ProxyFrontendHandler(connection, null));
+//			.addLast(new AuthenticationHandler());
 //			.addLast(new ChunkedWriteHandler())
-//			.addLast(new HttpRouteHandler(router));
+			.addLast("route-handler", new HttpRouteHandler(connection, router))
+			.addLast("frontend-handler", new ProxyFrontendHandler(connection, null));
 	}
 	
 }
