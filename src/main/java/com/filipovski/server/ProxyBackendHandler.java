@@ -11,12 +11,8 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
 
-import java.io.IOException;
-import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject> {
 	private Connection connection;
@@ -43,11 +39,10 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
     	actionNum++;
-  }
+    }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-    	System.out.println("Backend added!");
     	actionNum++;
         ctx.pipeline()
            .addBefore(ctx.name(), null, new HttpClientCodec())
@@ -59,9 +54,7 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
             throws Exception {
     	actionNum++;
     	
-    	System.out.println("Write to server !");
-    	
-    	inboundChannel.writeAndFlush(httpObject); // ReferenceCountUtil.retain(httpObject));
+    	inboundChannel.writeAndFlush(ReferenceCountUtil.retain(httpObject));
 
 //        if (httpObject instanceof HttpResponse) {
 //            currentRequest = null;
@@ -85,7 +78,6 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     	
     	@Override
         public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-    		System.out.println("RequestOutboundHanler added");
         	actionNum++;
             handlerContext = ctx.pipeline().context(this);
     		requestsQueue = new PendingWriteQueue(ctx);
