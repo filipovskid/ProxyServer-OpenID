@@ -1,14 +1,8 @@
-package com.filipovski.server;
+package com.filipovski.server.authentication;
 
+import com.filipovski.server.utils.Utils;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.router.Router;
-import io.netty.handler.stream.ChunkedWriteHandler;
-import io.netty.util.ReferenceCountUtil;
-import org.apache.http.HttpConnection;
-
-import java.io.File;
-import java.lang.ref.Reference;
 
 public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
@@ -26,6 +20,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         FullHttpRequest request = (FullHttpRequest) msg;
 
         if(Utils.isAuthenticated("")) {
+            ctx.pipeline().remove(this);
             ctx.fireChannelRead(request);
             return;
         }

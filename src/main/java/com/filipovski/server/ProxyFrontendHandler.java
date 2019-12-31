@@ -42,17 +42,16 @@ public class ProxyFrontendHandler extends SimpleChannelInboundHandler<FullHttpRe
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		httpServerCodec = new HttpServerCodec();
 		httpObjectAggregator = new HttpObjectAggregator(1024 * 1024);
-		ctx.pipeline()
-			.addBefore(ctx.name(), null, httpServerCodec)
-			.addBefore(ctx.name(), null, httpObjectAggregator)
-			.addBefore(ctx.name(), null, new AuthenticationHandler());
+//		ctx.pipeline()
+//			.addBefore(ctx.name(), null, httpServerCodec)
+//			.addBefore(ctx.name(), null, httpObjectAggregator);
 	}
 
 	@Override
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		ctx.pipeline()
-			.remove(httpServerCodec)
-			.remove(httpObjectAggregator);
+//		ctx.pipeline()
+//			.remove(httpServerCodec)
+//			.remove(httpObjectAggregator);
 
 		if (outboundChannel != null) {
 			outboundChannel.close();

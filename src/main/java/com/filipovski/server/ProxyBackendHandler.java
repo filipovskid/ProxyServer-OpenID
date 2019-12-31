@@ -18,8 +18,7 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
 	private Connection connection;
     private Channel inboundChannel;
     private RequestOutboundHandler requestOutboundHandler;
-    private int actionNum;
-    
+
     private volatile HttpRequest currentRequest;
 
     public ProxyBackendHandler(Connection connection, Channel inboundChannel) {
@@ -27,23 +26,19 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
         this.inboundChannel = inboundChannel;
         this.requestOutboundHandler = new RequestOutboundHandler();
         
-        this.actionNum = 0;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    	actionNum++;
         requestOutboundHandler.tryWritingRequests();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-    	actionNum++;
     }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-    	actionNum++;
         ctx.pipeline()
            .addBefore(ctx.name(), null, new HttpClientCodec())
            .addBefore(ctx.name(), null, this.requestOutboundHandler);
@@ -52,7 +47,6 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, HttpObject httpObject)
             throws Exception {
-    	actionNum++;
     	
     	inboundChannel.writeAndFlush(ReferenceCountUtil.retain(httpObject));
 
@@ -78,14 +72,12 @@ public class ProxyBackendHandler extends SimpleChannelInboundHandler<HttpObject>
     	
     	@Override
         public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        	actionNum++;
             handlerContext = ctx.pipeline().context(this);
     		requestsQueue = new PendingWriteQueue(ctx);
         }
     	
     	@Override
 		public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-        	actionNum++;
     		if(msg instanceof FullHttpRequest) {
     			HttpRequest request = (HttpRequest) msg;
     			requestsQueue.add(request, promise);

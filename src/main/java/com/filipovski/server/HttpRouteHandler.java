@@ -4,16 +4,21 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.rmi.CORBA.Util;
 
+import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.utils.Utils;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,6 +32,7 @@ import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.codec.http.router.RouteResult;
 import io.netty.handler.codec.http.router.Router;
+import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 
 public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
@@ -64,11 +70,10 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 		String host = request.headers().get(HttpHeaderNames.HOST);
+		attachSession(ctx, request);
 
 		if(Utils.notForLocalServer(host)) {
 //			detachRouteHandler(ctx);
-            ctx.pipeline()
-                    .replace(ctx.name(), "authentication-handler", new AuthenticationHandler());
 			ctx.fireChannelRead(ReferenceCountUtil.retain(request));
 
 			return;
@@ -78,6 +83,36 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 //		prepareLoginHtmlFile(routeResult.target());
 		sendFileResponse(ctx, request, routeResult.target());
+	}
+
+	private ProxySession attachSession(ChannelHandlerContext ctx, FullHttpRequest request) {
+		String cookieString = request.headers().get(HttpHeaderNames.COOKIE, "_=");
+		Map<String, ProxySession> sessionContainer = (Map<String, ProxySession>) ctx.channel()
+				.attr(AttributeKey.valueOf("session-container")).get();
+
+		ProxySession proxySession = getProxySession(sessionContainer, cookieString);
+
+		sessionContainer.putIfAbsent(proxySession.getSessionId(), proxySession);
+		ctx.channel().attr(Utils.sessionAttributeKey).set(proxySession);
+
+		return proxySession;
+	}
+
+	private ProxySession getProxySession(Map<String, ProxySession> sessionContainer, String cookieString) {
+		Map<String, HttpCookie> cookies = HttpCookie.parse(cookieString).stream()
+				.collect(Collectors.toMap(HttpCookie::getName, Function.identity()));
+
+		if(cookies.containsKey(Utils.proxySessionName) &&
+				sessionContainer.containsKey(cookies.get(Utils.proxySessionName).getValue())) {
+			String sessionCookie = cookies.get(Utils.proxySessionName).getValue();
+
+			return sessionContainer.get(sessionCookie);
+		}
+
+		String sessionId = UUID.randomUUID().toString();
+		ProxySession proxySession = ProxySession.of(sessionId);
+
+		return proxySession;
 	}
 
 	private void detachRouteHandler(ChannelHandlerContext ctx) {
@@ -90,6 +125,8 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 	private void sendFileResponse(ChannelHandlerContext ctx, FullHttpRequest request, File file) throws IOException {
 		RandomAccessFile raf;
+		ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
+
 		try {
 			raf = new RandomAccessFile(file, "r");
 		} catch (FileNotFoundException ignore) {
@@ -100,6 +137,13 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 		long fileLength = raf.length();
 
 		HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+
+		// Attach session cookie
+		if(proxySession.isNewTerminated()) {
+			String cookieString = String.format("%s=%s; ", Utils.proxySessionName, proxySession.getSessionId());
+			response.headers().set(HttpHeaderNames.SET_COOKIE, cookieString);
+		}
+
 		HttpUtil.setContentLength(response, fileLength);
 		setContentTypeHeader(response, file);
 
