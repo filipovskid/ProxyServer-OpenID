@@ -6,6 +6,8 @@ import java.util.Map;
 
 import com.filipovski.server.authentication.AuthenticationHandler;
 import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.utils.FileRouteManager;
+import com.filipovski.server.utils.RouteManager;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.router.Router;
@@ -26,10 +28,9 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 		String base = "/Users/darko/Documents/Projects/ProxyServer-OpenID/";
 		
 		System.out.println("Initialize");
-		Router<File> router = new Router<File>()
-				.GET("login.html", new File(base + "login/login.html"))
-				.GET("login_darko", new File(base + "login/google_login.html"))
-	            .notFound(new File(base + "login/bad.html"));
+		Router<RouteManager> router = new Router<RouteManager>()
+				.GET("/login/login.html", FileRouteManager.of("static/login.html"));
+//				.notFound(FileRouteManager.of("/static/bad.html"));
 
 		ch.attr(AttributeKey.valueOf("session-container")).set(this.sessionContainer);
 

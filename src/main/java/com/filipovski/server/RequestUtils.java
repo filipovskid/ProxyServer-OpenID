@@ -9,7 +9,7 @@ import org.apache.http.client.utils.URIBuilder;
 
 public class RequestUtils {
 	
-	static URL buildUrl(String base, String endpoint, Map<String, String> parameters) throws URISyntaxException, MalformedURLException {
+	public static URL buildUrl(String base, String endpoint, Map<String, String> parameters) throws URISyntaxException, MalformedURLException {
 		URIBuilder uriBuilder = new URIBuilder(base + endpoint);
 		
 		parameters.entrySet()

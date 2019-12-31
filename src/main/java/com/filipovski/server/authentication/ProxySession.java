@@ -9,11 +9,13 @@ public class ProxySession {
     private Map<String, Object> attributes;
     private String sessionId;
     private boolean newSession;
+    private boolean authenticated;
 
     public ProxySession(String sessionId) {
         this.sessionId = sessionId;
         this.attributes = new ConcurrentHashMap<>();
         this.newSession = true;
+        this.authenticated = false;
     }
 
     public static ProxySession of(String sessionId) {
@@ -38,6 +40,10 @@ public class ProxySession {
 
     public synchronized void notNew() {
         this.newSession = false;
+    }
+
+    public synchronized  boolean isAuthenticated() {
+        return authenticated;
     }
 
     public synchronized boolean isNewTerminated() {
