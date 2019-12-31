@@ -18,13 +18,26 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         FullHttpRequest request = (FullHttpRequest) msg;
+        ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
 
-        if(Utils.isAuthenticated("")) {
+        if(proxySession.isAuthenticated()) {
             ctx.pipeline().remove(this);
             ctx.fireChannelRead(request);
             return;
         }
 
+        FullHttpResponse response =
+                new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.FOUND);
 
+        response.headers().set(HttpHeaderNames.LOCATION, "http://localhost:6555/login/login.html");
+        HttpUtil.setContentLength(response, 0);
+
+        ctx.writeAndFlush(response).addListener(new ChannelFutureListener() {
+
+            @Override
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                System.out.println(channelFuture.isSuccess());
+            }
+        });
     }
 }
