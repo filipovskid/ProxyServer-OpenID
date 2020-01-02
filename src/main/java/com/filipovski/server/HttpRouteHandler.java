@@ -65,8 +65,9 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 		}
 
 		RouteResult<RouteManager> routeResult = router.route(request.method(), request.uri());
-		RouteManager m = routeResult.target();
-		m.handleHttpRequest(ctx, request);
+		RouteManager routeManager = routeResult.target();
+
+		routeManager.handleHttpRequest(ctx, request, routeResult.queryParams());
 	}
 
 	private ProxySession attachSession(ChannelHandlerContext ctx, FullHttpRequest request) {

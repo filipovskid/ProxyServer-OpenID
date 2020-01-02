@@ -4,6 +4,11 @@ import com.filipovski.server.utils.Utils;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+
 public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
     @Override
@@ -29,15 +34,24 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         FullHttpResponse response =
                 new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.FOUND);
 
-        response.headers().set(HttpHeaderNames.LOCATION, "http://localhost:6555/login/login.html");
+        response.headers().set(HttpHeaderNames.LOCATION, this.getRedirectUrl(request));
         HttpUtil.setContentLength(response, 0);
 
-        ctx.writeAndFlush(response).addListener(new ChannelFutureListener() {
+        ctx.writeAndFlush(response);
+    }
 
-            @Override
-            public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                System.out.println(channelFuture.isSuccess());
-            }
-        });
+    private String getRedirectUrl(FullHttpRequest request) {
+        Map<String, String> params = new HashMap<>();
+        params.put("target_url", request.uri());
+
+        String redirectUrl = String.format("%s/login", Utils.basicUrl);
+
+        try {
+            redirectUrl = Utils.buildUrl(Utils.basicUrl, "/login", params).toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return redirectUrl;
     }
 }

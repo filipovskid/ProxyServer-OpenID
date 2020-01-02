@@ -10,12 +10,15 @@ public class ProxySession {
     private String sessionId;
     private boolean newSession;
     private boolean authenticated;
+    private String pictureUrl;
+    private String email;
 
     public ProxySession(String sessionId) {
         this.sessionId = sessionId;
         this.attributes = new ConcurrentHashMap<>();
         this.newSession = true;
         this.authenticated = false;
+        this.pictureUrl = "https://i.stack.imgur.com/34AD2.jpg";
     }
 
     public static ProxySession of(String sessionId) {
@@ -46,6 +49,18 @@ public class ProxySession {
         return authenticated;
     }
 
+    public ProxySession setPicture(String pictureUrl) {
+        this.pictureUrl = pictureUrl;
+
+        return this;
+    }
+
+    public ProxySession setEmail(String email) {
+        this.email = email;
+
+        return this;
+    }
+
     public synchronized boolean isNewTerminated() {
         if(this.newSession) {
             this.newSession = false;
@@ -54,6 +69,17 @@ public class ProxySession {
         }
 
         return false;
+    }
+
+    public synchronized ProxySession authenticate() {
+        this.authenticated = true;
+
+        return this;
+    }
+
+    public synchronized void authenticate(String pictureUrl, String email) {
+        this.pictureUrl = pictureUrl;
+        this.email = email;
     }
 
     public String getSessionId() {
