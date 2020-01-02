@@ -30,7 +30,12 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 		
 		System.out.println("Initialize");
 
-		Router<RouteManager> router = new Router<RouteManager>()
+		Router<RouteManager> localRouter = new Router<RouteManager>()
+				.GET("/login", FileRouteManager.of("static/single_login.html"))
+				.GET("/code", new AuthRouteManager());
+//				.notFound(FileRouteManager.of("/static/bad.html"));
+
+		Router<RouteManager> foreignRouter = new Router<RouteManager>()
 				.GET("/login", FileRouteManager.of("static/single_login.html"))
 				.GET("/code", new AuthRouteManager());
 //				.notFound(FileRouteManager.of("/static/bad.html"));
@@ -43,7 +48,7 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 //			.addLast(new ProxyFrontendHandler(connection, null));
 //			.addLast(new AuthenticationHandler());
 //			.addLast(new ChunkedWriteHandler())
-			.addLast("route-handler", new HttpRouteHandler(connection, router))
+			.addLast("route-handler", new HttpRouteHandler(connection, localRouter, foreignRouter))
             .addLast("authentication-handler", new AuthenticationHandler())
 			.addLast("frontend-handler", new ProxyFrontendHandler(connection, null));
 	}

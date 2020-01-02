@@ -1,7 +1,6 @@
 package com.filipovski.server;
 
 import com.filipovski.server.authentication.ProxySession;
-import com.filipovski.server.utils.FileRouteManager;
 import com.filipovski.server.utils.RouteManager;
 import com.filipovski.server.utils.Utils;
 import io.netty.channel.ChannelHandlerContext;
@@ -17,6 +16,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 
 import java.net.HttpCookie;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -28,11 +28,14 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 	private HttpServerCodec httpServerCodec;
 	private HttpObjectAggregator httpObjectAggregator;
 	private ChunkedWriteHandler chunkedWriteHandler;
-	private final Router<RouteManager> router;
+	private final Router<RouteManager> localRouter;
+	private final Router<RouteManager> foreignRouter;
 
-	public HttpRouteHandler(Connection connection, Router<RouteManager> router) {
+	public HttpRouteHandler(Connection connection, Router<RouteManager> localRouter,
+							Router<RouteManager> foreignRouter) {
 		this.connection = connection;
-		this.router = router;
+		this.localRouter = localRouter;
+		this.foreignRouter = foreignRouter;
 	}
 
 	@Override
@@ -57,28 +60,33 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 		String host = request.headers().get(HttpHeaderNames.HOST);
-		attachSession(ctx, request);
+
 
 		if(Utils.notForLocalServer(host)) {
 			ctx.fireChannelRead(ReferenceCountUtil.retain(request));
+
+//			attachSession(ctx, request, routeResult.queryParams());
 			return;
 		}
 
-		RouteResult<RouteManager> routeResult = router.route(request.method(), request.uri());
+		RouteResult<RouteManager> routeResult = localRouter.route(request.method(), request.uri());
 		RouteManager routeManager = routeResult.target();
+		attachSession(ctx, request, routeResult.queryParams());
 
 		routeManager.handleHttpRequest(ctx, request, routeResult.queryParams());
 	}
 
-	private ProxySession attachSession(ChannelHandlerContext ctx, FullHttpRequest request) {
+	private ProxySession attachSession(ChannelHandlerContext ctx, FullHttpRequest request,
+									   Map<String, List<String>> queryParams) {
 		if(ctx.channel().hasAttr(Utils.sessionAttributeKey))
 			return (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
 
-		String cookieString = request.headers().get(HttpHeaderNames.COOKIE, "_=");
 		Map<String, ProxySession> sessionContainer = (Map<String, ProxySession>) ctx.channel()
 				.attr(AttributeKey.valueOf("session-container")).get();
+		String cookieString = request.headers().get(HttpHeaderNames.COOKIE, "_=");
 
-		ProxySession proxySession = getProxySession(sessionContainer, cookieString);
+		// Obtain old session or create a new one
+		ProxySession proxySession = getProxySession(sessionContainer, cookieString, queryParams);
 
 		sessionContainer.putIfAbsent(proxySession.getSessionId(), proxySession);
 		ctx.channel().attr(Utils.sessionAttributeKey).set(proxySession);
@@ -86,10 +94,12 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 		return proxySession;
 	}
 
-	private ProxySession getProxySession(Map<String, ProxySession> sessionContainer, String cookieString) {
+	private ProxySession getProxySession(Map<String, ProxySession> sessionContainer, String cookieString,
+										 Map<String, List<String>> queryParams) {
 		Map<String, HttpCookie> cookies = HttpCookie.parse(cookieString).stream()
 				.collect(Collectors.toMap(HttpCookie::getName, Function.identity()));
 
+		// Contains cookie
 		if(cookies.containsKey(Utils.proxySessionName) &&
 				sessionContainer.containsKey(cookies.get(Utils.proxySessionName).getValue())) {
 			String sessionCookie = cookies.get(Utils.proxySessionName).getValue();
@@ -97,6 +107,15 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 			return sessionContainer.get(sessionCookie);
 		}
 
+		// Contains query string
+		if(queryParams.containsKey(Utils.proxySessionName) &&
+				sessionContainer.containsKey(cookies.get(Utils.proxySessionName).getValue())) {
+			String sessionParam = queryParams.get(Utils.proxySessionName).get(0);
+
+			return sessionContainer.get(sessionParam);
+		}
+
+		// Creater new session
 		String sessionId = UUID.randomUUID().toString();
 		ProxySession proxySession = ProxySession.of(sessionId);
 
