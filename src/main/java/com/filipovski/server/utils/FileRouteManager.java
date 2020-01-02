@@ -1,35 +1,44 @@
 package com.filipovski.server.utils;
 
-import com.filipovski.server.RequestUtils;
 import com.filipovski.server.authentication.ProxySession;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.activation.MimetypesFileTypeMap;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileRouteManager implements RouteManager {
     private File file;
     private URL resourcePath;
+    private Map<String, String> fileParameters;
 
     public FileRouteManager(String filePath) {
         this.resourcePath = FileRouteManager.class.getClassLoader().getResource(filePath);
         String tst = this.resourcePath.getPath();
         this.file = new File(tst);
+        this.fileParameters = new HashMap<>();
+    }
+
+    public static FileRouteManager of(String filePath, Map<String, String> fileParameters) {
+        FileRouteManager manager = new FileRouteManager(filePath);
+        manager.fileParameters = fileParameters;
+
+        return manager;
     }
 
     public static FileRouteManager of(String filePath) {
@@ -38,13 +47,20 @@ public class FileRouteManager implements RouteManager {
         return manager;
     }
 
+    public void setFileParameters(Map<String, String> fileParameters) {
+        this.fileParameters = fileParameters;
+    }
+
     @Override
-    public void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request) throws IOException {
+    public void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request,
+                                  Map<String, List<String>> queryParams) throws IOException {
+        File processedFile = prepareHtmlFile(this.resourcePath, queryParams);
+
         RandomAccessFile raf;
         ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
 
         try {
-            raf = new RandomAccessFile(file, "r");
+            raf = new RandomAccessFile(processedFile, "r");
         } catch (FileNotFoundException ignore) {
 //		            sendError(ctx, NOT_FOUND);
             return;
@@ -98,6 +114,8 @@ public class FileRouteManager implements RouteManager {
             @Override
             public void operationComplete(ChannelProgressiveFuture future) {
                 System.err.println(future.channel() + " Transfer complete.");
+                processedFile.delete();
+
             }
         });
 
@@ -118,11 +136,42 @@ public class FileRouteManager implements RouteManager {
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
     }
 
-    private void prepareLoginHtmlFile(File file) throws URISyntaxException, IOException {
-        Charset charset = StandardCharsets.UTF_8;
-        String content = new String(Files.readAllBytes(file.toPath()), charset);
-        content = content.replaceAll("@\\{LOGIN-URL\\}", getLoginUrl());
-        Files.write(file.toPath(), content.getBytes(charset));
+    private File prepareHtmlFile(URL filePath, Map<String, List<String>> queryParams) {
+//        Charset charset = StandardCharsets.UTF_8;
+//        String content = new String`(Files.readAllBytes(file.toPath()), charset);
+//        content = content.replaceAll("@\\{LOGIN-URL\\}", getLoginUrl());
+//        Files.write(file.toPath(), content.getBytes(charset));
+        String path = filePath.getPath();
+        File temp = new File(path);
+        try {
+            temp = File.createTempFile("login", ".html");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (Stream<String> lines = Files.lines(Paths.get(path));
+        PrintWriter writer = new PrintWriter(new FileWriter(temp))) {
+            if(queryParams.containsKey("target_url"))
+                this.fileParameters.put("@\\{REDIRECT-URL\\}", URLEncoder.encode(queryParams.get("target_url").get(0), "UTF-8"));
+
+            List<String> keys = new ArrayList<>();
+            List<String> values = new ArrayList<>();
+
+            this.fileParameters.entrySet().forEach(e -> {
+                keys.add(e.getKey());
+                values.add(e.getValue());
+            });
+
+            List<String> replaced = lines
+                    .map(line -> StringUtils.replaceEach(line, keys.toArray(new String[0]), values.toArray(new String[0])))
+                    .collect(Collectors.toList());
+
+            replaced.stream().forEach(l -> writer.println(l));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return temp;
     }
 
     private String getLoginUrl() throws MalformedURLException, URISyntaxException {
@@ -137,6 +186,6 @@ public class FileRouteManager implements RouteManager {
         parameters.put("state", "darko_filipovski");
         parameters.put("nonce", "123OpenID");
 
-        return RequestUtils.buildUrl(loginBaseUrl, "o/oauth2/v2/auth", parameters).toString();
+        return Utils.buildUrl(loginBaseUrl, "o/oauth2/v2/auth", parameters).toString();
     }
 }
