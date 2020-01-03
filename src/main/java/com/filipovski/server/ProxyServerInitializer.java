@@ -6,9 +6,7 @@ import java.util.Map;
 
 import com.filipovski.server.authentication.AuthenticationHandler;
 import com.filipovski.server.authentication.ProxySession;
-import com.filipovski.server.utils.AuthRouteManager;
-import com.filipovski.server.utils.FileRouteManager;
-import com.filipovski.server.utils.RouteManager;
+import com.filipovski.server.utils.*;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.router.Router;
@@ -31,14 +29,13 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 		System.out.println("Initialize");
 
 		Router<RouteManager> localRouter = new Router<RouteManager>()
-				.GET("/login", FileRouteManager.of("static/single_login.html"))
-				.GET("/code", new AuthRouteManager());
+				.GET("/login", RouteManagerFactory.loginFileRouter("static/single_login.html"))
+				.GET("/code", RouteManagerFactory.openidAuthManager());
 //				.notFound(FileRouteManager.of("/static/bad.html"));
 
 		Router<RouteManager> foreignRouter = new Router<RouteManager>()
-				.GET("/login", FileRouteManager.of("static/single_login.html"))
-				.GET("/code", new AuthRouteManager());
-//				.notFound(FileRouteManager.of("/static/bad.html"));
+				.GET(Utils.foreignCaptiveEndpoint, RouteManagerFactory.foreignRedirectManager())
+				.notFound(RouteManagerFactory.foreignDefaultManager());
 
 		ch.attr(AttributeKey.valueOf("session-container")).set(this.sessionContainer);
 

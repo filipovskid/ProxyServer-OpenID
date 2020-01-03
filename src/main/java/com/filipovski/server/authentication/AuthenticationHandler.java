@@ -32,7 +32,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         }
 
         FullHttpResponse response =
-                new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.FOUND);
+                new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.TEMPORARY_REDIRECT);
 
         response.headers().set(HttpHeaderNames.LOCATION, this.getRedirectUrl(request));
         HttpUtil.setContentLength(response, 0);

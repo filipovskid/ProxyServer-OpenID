@@ -12,6 +12,7 @@ public class Utils {
     public static final String proxySessionName = "poidSESSION";
     public static final AttributeKey sessionAttributeKey  = AttributeKey.valueOf("session");
     public static final String basicUrl = "http://localhost:6555";
+    public static final String foreignCaptiveEndpoint = "/oid-proxy.oid/proxy";
 
     public static boolean notForLocalServer(String host) {
         return !host.contains("localhost");

@@ -19,19 +19,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+//interface TemplateParameterObtainer {
+//    Map<String, String> obtainParameters(ChannelHandlerContext ctx, Map<String, List<String>> queryParams);
+//}
 
 public class FileRouteManager implements RouteManager {
     private File file;
     private URL resourcePath;
     private Map<String, String> fileParameters;
+    private BiFunction<ChannelHandlerContext,
+                        Map<String, List<String>>,
+                        Map<String, String>> obtainParameters;
 
     public FileRouteManager(String filePath) {
         this.resourcePath = FileRouteManager.class.getClassLoader().getResource(filePath);
         String tst = this.resourcePath.getPath();
         this.file = new File(tst);
         this.fileParameters = new HashMap<>();
+        this.obtainParameters = (c, q) -> new HashMap<>();
     }
 
     public static FileRouteManager of(String filePath, Map<String, String> fileParameters) {
@@ -41,10 +50,17 @@ public class FileRouteManager implements RouteManager {
         return manager;
     }
 
-    public static FileRouteManager of(String filePath) {
-        FileRouteManager manager = new FileRouteManager(filePath);
+    public FileRouteManager setParameterObtainer(BiFunction<ChannelHandlerContext,
+                                                             Map<String, List<String>>,
+                                                             Map<String, String>> obtainParameters) {
+        this.obtainParameters = obtainParameters;
 
-        return manager;
+        return this;
+    }
+
+    public static FileRouteManager of(String filePath) {
+
+        return new FileRouteManager(filePath);
     }
 
     public void setFileParameters(Map<String, String> fileParameters) {
@@ -54,7 +70,7 @@ public class FileRouteManager implements RouteManager {
     @Override
     public void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request,
                                   Map<String, List<String>> queryParams) throws IOException {
-        File processedFile = prepareHtmlFile(this.resourcePath, queryParams);
+        File processedFile = prepareHtmlFile(ctx, this.resourcePath.getPath(), queryParams);
 
         RandomAccessFile raf;
         ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
@@ -136,29 +152,30 @@ public class FileRouteManager implements RouteManager {
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
     }
 
-    private File prepareHtmlFile(URL filePath, Map<String, List<String>> queryParams) {
+    private File prepareHtmlFile(ChannelHandlerContext ctx, String filePath, Map<String, List<String>> queryParams) {
 //        Charset charset = StandardCharsets.UTF_8;
 //        String content = new String`(Files.readAllBytes(file.toPath()), charset);
 //        content = content.replaceAll("@\\{LOGIN-URL\\}", getLoginUrl());
 //        Files.write(file.toPath(), content.getBytes(charset));
-        String path = filePath.getPath();
-        File temp = new File(path);
+        this.fileParameters.putAll(this.obtainParameters.apply(ctx, queryParams));
+
+        File temp = new File(filePath);
         try {
-            temp = File.createTempFile("login", ".html");
+            temp = File.createTempFile("temp", ".html");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        try (Stream<String> lines = Files.lines(Paths.get(path));
+        try (Stream<String> lines = Files.lines(Paths.get(filePath));
         PrintWriter writer = new PrintWriter(new FileWriter(temp))) {
-            if(queryParams.containsKey("target_url"))
-                this.fileParameters.put("@\\{REDIRECT-URL\\}", URLEncoder.encode(queryParams.get("target_url").get(0), "UTF-8"));
+//            if(queryParams.containsKey("target_url"))
+//                this.fileParameters.put("@\\{REDIRECT-URL\\}", URLEncoder.encode(queryParams.get("target_url").get(0), "UTF-8"));
 
             List<String> keys = new ArrayList<>();
             List<String> values = new ArrayList<>();
 
             this.fileParameters.entrySet().forEach(e -> {
-                keys.add(e.getKey());
+                keys.add(String.format("@{%s}", e.getKey()));
                 values.add(e.getValue());
             });
 

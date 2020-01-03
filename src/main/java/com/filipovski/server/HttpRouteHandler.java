@@ -60,16 +60,13 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 		String host = request.headers().get(HttpHeaderNames.HOST);
+        RouteResult<RouteManager> routeResult;
 
+		if(Utils.notForLocalServer(host))
+		    routeResult = foreignRouter.route(request.method(), request.uri());
+		else
+		    routeResult = localRouter.route(request.method(), request.uri());
 
-		if(Utils.notForLocalServer(host)) {
-			ctx.fireChannelRead(ReferenceCountUtil.retain(request));
-
-//			attachSession(ctx, request, routeResult.queryParams());
-			return;
-		}
-
-		RouteResult<RouteManager> routeResult = localRouter.route(request.method(), request.uri());
 		RouteManager routeManager = routeResult.target();
 		attachSession(ctx, request, routeResult.queryParams());
 
