@@ -6,6 +6,8 @@ import io.netty.handler.codec.http.*;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,13 +43,24 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     }
 
     private String getRedirectUrl(FullHttpRequest request) {
-        Map<String, String> params = new HashMap<>();
-        params.put("target_url", request.uri());
-
+        Map<String, String> redirectParams = new HashMap<>();
         String redirectUrl = String.format("%s/login", Utils.basicUrl);
 
         try {
-            redirectUrl = Utils.buildUrl(Utils.basicUrl, "/login", params).toString();
+//            Map<String, String> forwardParams = new HashMap<>();
+//            forwardParams.put("target_url", request.uri());
+//            forwardParams.put(Utils.proxySessionName, sessionId);
+
+            String urlBase = request.headers().get(HttpHeaderNames.HOST);
+            String target_url = URLEncoder.encode(request.uri(), StandardCharsets.UTF_8.name());
+
+            String forwardUrl =
+                    String.format("http://%s%s?target_url=%s", urlBase, Utils.foreignCaptiveEndpoint,
+                            target_url);
+
+            redirectParams.put("target_url", forwardUrl);
+
+            redirectUrl = Utils.buildUrl(Utils.basicUrl, "/login", redirectParams).toString();
         } catch (Exception e) {
             e.printStackTrace();
         }

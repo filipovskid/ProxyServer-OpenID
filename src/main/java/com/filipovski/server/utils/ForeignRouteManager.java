@@ -12,10 +12,11 @@ public class ForeignRouteManager implements RouteManager {
     @Override
     public void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest request,
                                   Map<String, List<String>> queryParams) throws IOException {
-        if(!queryParams.containsKey("target-url"))
+        System.err.println("ForeignRouteManager");
+        if(!queryParams.containsKey("target_url"))
             return; // Bad request handle
 
-        String targetUrl = queryParams.get("target-url").get(0);
+        String targetUrl = queryParams.get("target_url").get(0);
         FullHttpResponse response =
                 new DefaultFullHttpResponse(request.protocolVersion(),
                                             HttpResponseStatus.TEMPORARY_REDIRECT);
