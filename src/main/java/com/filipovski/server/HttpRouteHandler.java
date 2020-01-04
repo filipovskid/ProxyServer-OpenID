@@ -14,8 +14,12 @@ import io.netty.handler.codec.http.router.Router;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
+import org.asynchttpclient.uri.Uri;
 
 import java.net.HttpCookie;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,8 +67,8 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
         RouteResult<RouteManager> routeResult;
 
 		if(Utils.notForLocalServer(host))
-		    routeResult = foreignRouter.route(request.method(), request.uri());
-		else
+            routeResult = foreignRouter.route(request.method(), this.getRouterUri(request.uri()));
+        else
 		    routeResult = localRouter.route(request.method(), request.uri());
 
 		RouteManager routeManager = routeResult.target();
@@ -75,8 +79,8 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 	private ProxySession attachSession(ChannelHandlerContext ctx, FullHttpRequest request,
 									   Map<String, List<String>> queryParams) {
-		if(ctx.channel().hasAttr(Utils.sessionAttributeKey))
-			return (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
+//		if(ctx.channel().hasAttr(Utils.sessionAttributeKey))
+//			return (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
 
 		Map<String, ProxySession> sessionContainer = (Map<String, ProxySession>) ctx.channel()
 				.attr(AttributeKey.valueOf("session-container")).get();
@@ -106,7 +110,7 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 		// Contains query string
 		if(queryParams.containsKey(Utils.proxySessionName) &&
-				sessionContainer.containsKey(cookies.get(Utils.proxySessionName).getValue())) {
+				sessionContainer.containsKey(queryParams.get(Utils.proxySessionName).get(0))) {
 			String sessionParam = queryParams.get(Utils.proxySessionName).get(0);
 
 			return sessionContainer.get(sessionParam);
@@ -118,4 +122,20 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 		return proxySession;
 	}
+
+	private String getRouterUri(String requestUri) {
+
+        try {
+            URI uri = new URI(requestUri);
+            return new URI(null,
+                    null,
+                    uri.getPath(),
+                    uri.getQuery(),
+                    uri.getFragment()).toString();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
 }
