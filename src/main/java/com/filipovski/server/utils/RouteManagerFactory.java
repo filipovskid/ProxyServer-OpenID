@@ -10,6 +10,8 @@ import io.netty.util.ReferenceCountUtil;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -63,8 +65,40 @@ public final class RouteManagerFactory {
 
     public static RouteManager authRedirectManager() {
         return ((ctx, request, queryParams) -> {
+            ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
+            FullHttpResponse response =
+                    new DefaultFullHttpResponse(request.protocolVersion(),
+                            HttpResponseStatus.FOUND);
+            HttpUtil.setContentLength(response, 0);
+            String redirectUrl = "";
 
+            try {
+                if (queryParams.containsKey("target_url")) {
+                    String targetUrl = queryParams.get("target_url").get(0);
+
+                    if (proxySession.isAuthenticated()) {
+                        redirectUrl = String.format("%s&%s=%s", targetUrl,
+                                Utils.proxySessionName,
+                                proxySession.getSessionId());
+                    } else {
+                        redirectUrl = Utils.buildUrl(Utils.basicUrl,
+                                "/login",
+                                flattenParams(queryParams)).toString();
+                    }
+                }
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+
+            setCookie(ctx, request, response);
+            response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
+            ctx.writeAndFlush(response);
         });
+    }
+
+    private static Map<String, String> flattenParams(Map<String, List<String>> queryParams) {
+        return queryParams.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e-> e.getValue().get(0)));
     }
 
     public static RouteManager foreignRedirectManager() {

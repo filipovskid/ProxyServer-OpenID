@@ -44,7 +44,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
     private String getRedirectUrl(FullHttpRequest request) {
         Map<String, String> redirectParams = new HashMap<>();
-        String redirectUrl = String.format("%s/login", Utils.basicUrl);
+//        String redirectUrl = String.format("%s/login", Utils.basicUrl);
+        String redirectUrl = String.format("%s/auth", Utils.basicUrl);
 
         try {
 //            Map<String, String> forwardParams = new HashMap<>();
@@ -60,7 +61,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
             redirectParams.put("target_url", forwardUrl);
 
-            redirectUrl = Utils.buildUrl(Utils.basicUrl, "/login", redirectParams).toString();
+//            redirectUrl = Utils.buildUrl(Utils.basicUrl, "/login", redirectParams).toString();
+            redirectUrl = Utils.buildUrl(Utils.basicUrl, "/auth", redirectParams).toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
