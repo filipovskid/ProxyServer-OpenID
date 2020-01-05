@@ -28,7 +28,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
 
         if(proxySession.isAuthenticated()) {
-            ctx.pipeline().remove(this);
+//            ctx.pipeline().remove(this);
             ctx.fireChannelRead(request);
             return;
         }
