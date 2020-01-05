@@ -31,6 +31,7 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 		Router<RouteManager> localRouter = new Router<RouteManager>()
 				.GET("/login", RouteManagerFactory.loginFileRouter("static/single_login.html"))
 				.GET("/code", RouteManagerFactory.openidAuthManager());
+//				.GET("/auth", RouteManagerFactory.openidAuthManager());
 //				.notFound(FileRouteManager.of("/static/bad.html"));
 
 		Router<RouteManager> foreignRouter = new Router<RouteManager>()

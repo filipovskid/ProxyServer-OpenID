@@ -61,6 +61,12 @@ public final class RouteManagerFactory {
         });
     }
 
+    public static RouteManager authRedirectManager() {
+        return ((ctx, request, queryParams) -> {
+
+        });
+    }
+
     public static RouteManager foreignRedirectManager() {
         return ((ctx, request, queryParams) -> {
             if(!queryParams.containsKey("target_url"))
