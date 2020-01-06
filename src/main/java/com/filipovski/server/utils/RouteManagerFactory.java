@@ -129,7 +129,7 @@ public final class RouteManagerFactory {
 
         // Contains cookie
         if(!cookies.containsKey(Utils.proxySessionName) ||
-                sessionId.equals(cookies.get(Utils.proxySessionName).getValue())) {
+                !sessionId.equals(cookies.get(Utils.proxySessionName).getValue())) {
             String cookieValue = String.format("%s=%s; path=/", Utils.proxySessionName, sessionId);
                     // request.headers().get(HttpHeaderNames.HOST));
             response.headers().set(HttpHeaderNames.SET_COOKIE, cookieValue);
