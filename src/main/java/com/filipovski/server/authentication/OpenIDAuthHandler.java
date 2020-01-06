@@ -1,5 +1,6 @@
 package com.filipovski.server.authentication;
 
+import com.filipovski.server.utils.AppConfig;
 import com.filipovski.server.utils.Utils;
 import com.google.gson.Gson;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,7 +26,12 @@ public class OpenIDAuthHandler extends ChannelInboundHandlerAdapter {
     private AsyncHttpClient client = Dsl.asyncHttpClient();
     private Gson gson = new Gson();
     private Type type = new TypeToken<Map<String, String>>(){}.getType();
+    private AppConfig config;
 
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        this.config = ctx.channel().attr(Utils.configAttributeKey).get();
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -42,11 +48,11 @@ public class OpenIDAuthHandler extends ChannelInboundHandlerAdapter {
     }
 
     private BoundRequestBuilder exchangingAuthorizationCode(ManagedHttpRequest request) {
-        BoundRequestBuilder requestBuilder = client.preparePost(String.format("https://oauth2.googleapis.com/token"))
+        BoundRequestBuilder requestBuilder = client.preparePost(config.getToken_endpoint())
                 .addFormParam("code", request.getQueryParam("code"))
-                .addFormParam("client_id", "506173786117-5mfv7vupsog2405vnkspg9in70gee0n1.apps.googleusercontent.com")
-                .addFormParam("client_secret", "8yyOWTOmSLCMr9WirB8yQANE")
-                .addFormParam("redirect_uri", "http://localhost:6555/code")
+                .addFormParam("client_id", config.getClient_id())
+                .addFormParam("client_secret", config.getClient_secret())
+                .addFormParam("redirect_uri", config.getRedirect_uri())
                 .addFormParam("grant_type", "authorization_code");
 
         return requestBuilder;
@@ -59,7 +65,7 @@ public class OpenIDAuthHandler extends ChannelInboundHandlerAdapter {
                 values.get("token_type"),
                 values.get("access_token"));
 
-        BoundRequestBuilder requestBuilder = client.preparePost(String.format("https://openidconnect.googleapis.com/v1/userinfo"))
+        BoundRequestBuilder requestBuilder = client.prepareGet(config.getUserinfo_endpoint())
                 .addQueryParam("scope", "openid email profile")
                 .addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader);
 

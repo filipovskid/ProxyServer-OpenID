@@ -31,6 +31,8 @@ public final class RouteManagerFactory {
         return FileRouteManager.of(filePath)
                 .setParameterObtainer((ctx, queryParams) -> {
                     Map<String, String> fileParameters = new HashMap<>();
+                    if(!queryParams.containsKey("target_url"))
+                        return fileParameters;
 
                     String redirectUrl = "";
                     String urlParameter = "";

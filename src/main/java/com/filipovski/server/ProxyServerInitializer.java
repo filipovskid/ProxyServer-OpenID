@@ -15,18 +15,17 @@ import io.netty.util.AttributeKey;
 
 public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 	Map<String, ProxySession> sessionContainer;
+	AppConfig config;
 
-	public ProxyServerInitializer(Map<String, ProxySession> sessionContainer) {
+	public ProxyServerInitializer(Map<String, ProxySession> sessionContainer, AppConfig config) {
 		this.sessionContainer = sessionContainer;
+		this.config = config;
 	}
 
 	@Override
 	protected void initChannel(SocketChannel ch) throws Exception {
 		InetSocketAddress remoteAddress = ch.remoteAddress();
 		Connection connection = new Connection(new Address(remoteAddress.getHostString(), remoteAddress.getPort()));
-		String base = "/Users/darko/Documents/Projects/ProxyServer-OpenID/";
-		
-		System.out.println("Initialize");
 
 		Router<RouteManager> localRouter = new Router<RouteManager>()
 				.GET("/login", RouteManagerFactory.loginFileRouter("static/single_login.html"))
@@ -39,13 +38,9 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 				.notFound(RouteManagerFactory.foreignDefaultManager());
 
 		ch.attr(AttributeKey.valueOf("session-container")).set(this.sessionContainer);
+		ch.attr(Utils.configAttributeKey).set(this.config);
 
 		ch.pipeline()
-//			.addLast(new HttpServerCodec())
-//			.addLast(new HttpObjectAggregator(1024 * 1024))
-//			.addLast(new ProxyFrontendHandler(connection, null));
-//			.addLast(new AuthenticationHandler());
-//			.addLast(new ChunkedWriteHandler())
 			.addLast("route-handler", new HttpRouteHandler(connection, localRouter, foreignRouter))
             .addLast("authentication-handler", new AuthenticationHandler())
 			.addLast("frontend-handler", new ProxyFrontendHandler(connection, null));
