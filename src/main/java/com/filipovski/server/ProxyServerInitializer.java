@@ -1,11 +1,10 @@
 package com.filipovski.server;
 
-import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
 import com.filipovski.server.authentication.AuthenticationHandler;
-import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.models.ProxySession;
 import com.filipovski.server.utils.*;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -30,7 +29,8 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 		Router<RouteManager> localRouter = new Router<RouteManager>()
 				.GET("/login", RouteManagerFactory.loginFileRouter("static/single_login.html"))
 				.GET("/code", RouteManagerFactory.openidAuthManager())
-				.GET("/auth", RouteManagerFactory.authRedirectManager());
+				.GET("/auth", RouteManagerFactory.authRedirectManager())
+				.GET("/profile", RouteManagerFactory.profileFileRouter("static/profile.html"));
 //				.notFound(FileRouteManager.of("/static/bad.html"));
 
 		Router<RouteManager> foreignRouter = new Router<RouteManager>()

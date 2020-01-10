@@ -1,23 +1,21 @@
 package com.filipovski.server.utils;
 
-import com.filipovski.server.authentication.ManagedHttpRequest;
+import com.filipovski.server.models.GUser;
+import com.filipovski.server.models.ManagedHttpRequest;
 import com.filipovski.server.authentication.OpenIDAuthHandler;
-import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.models.ProxySession;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.util.ReferenceCountUtil;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -51,6 +49,23 @@ public final class RouteManagerFactory {
 
                     return fileParameters;
                 });
+    }
+
+    public static RouteManager profileFileRouter(String filePath) {
+        return FileRouteManager.of(filePath).setParameterObtainer((ctx, queryParams) -> {
+            Map<String, String> fileParameters = new HashMap<>();
+            ProxySession proxySession = ctx.channel().attr(Utils.sessionAttributeKey).get();
+
+            if(!proxySession.isAuthenticated()) return fileParameters;
+
+            GUser user = (GUser) proxySession.getAttribute("user");
+
+            fileParameters.put("name", user.getName());
+            fileParameters.put("email", user.getEmail());
+            fileParameters.put("pictureUrl", user.getPicture());
+
+            return fileParameters;
+        });
     }
 
     public static RouteManager openidAuthManager() {

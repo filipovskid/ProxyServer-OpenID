@@ -1,6 +1,6 @@
 package com.filipovski.server.utils;
 
-import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.models.ProxySession;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
@@ -12,7 +12,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;

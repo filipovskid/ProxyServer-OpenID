@@ -1,4 +1,4 @@
-package com.filipovski.server.authentication;
+package com.filipovski.server.models;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 

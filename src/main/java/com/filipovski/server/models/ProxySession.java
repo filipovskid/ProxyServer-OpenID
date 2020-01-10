@@ -1,4 +1,4 @@
-package com.filipovski.server.authentication;
+package com.filipovski.server.models;
 
 import java.util.Map;
 
@@ -10,15 +10,12 @@ public class ProxySession {
     private String sessionId;
     private boolean newSession;
     private boolean authenticated;
-    private String pictureUrl;
-    private String email;
 
     public ProxySession(String sessionId) {
         this.sessionId = sessionId;
         this.attributes = new ConcurrentHashMap<>();
         this.newSession = true;
         this.authenticated = false;
-        this.pictureUrl = "https://i.stack.imgur.com/34AD2.jpg";
     }
 
     public static ProxySession of(String sessionId) {
@@ -33,8 +30,14 @@ public class ProxySession {
         this.attributes = new ConcurrentHashMap<>();
     }
 
-    public synchronized void setAttributes(String key, Object value) {
+    public synchronized ProxySession setAttribute(String key, Object value) {
         this.attributes.putIfAbsent(key, value);
+
+        return this;
+    }
+
+    public synchronized Object getAttribute(String key) {
+        return attributes.get(key);
     }
 
     public synchronized boolean isNew() {
@@ -47,18 +50,6 @@ public class ProxySession {
 
     public synchronized  boolean isAuthenticated() {
         return authenticated;
-    }
-
-    public ProxySession setPicture(String pictureUrl) {
-        this.pictureUrl = pictureUrl;
-
-        return this;
-    }
-
-    public ProxySession setEmail(String email) {
-        this.email = email;
-
-        return this;
     }
 
     public synchronized boolean isNewTerminated() {
@@ -77,13 +68,12 @@ public class ProxySession {
         return this;
     }
 
-    public synchronized void authenticate(String pictureUrl, String email) {
-        this.pictureUrl = pictureUrl;
-        this.email = email;
-    }
-
     public String getSessionId() {
         return sessionId;
+    }
+
+    public boolean hasAttribute(String attribute) {
+        return attribute.contains(attribute);
     }
 
     @Override

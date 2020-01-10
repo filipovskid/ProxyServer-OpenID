@@ -1,5 +1,8 @@
 package com.filipovski.server.authentication;
 
+import com.filipovski.server.models.GUser;
+import com.filipovski.server.models.ManagedHttpRequest;
+import com.filipovski.server.models.ProxySession;
 import com.filipovski.server.utils.AppConfig;
 import com.filipovski.server.utils.Utils;
 import com.google.gson.Gson;
@@ -15,11 +18,9 @@ import org.asynchttpclient.Response;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class OpenIDAuthHandler extends ChannelInboundHandlerAdapter {
@@ -78,12 +79,13 @@ public class OpenIDAuthHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void authenticateUser(ChannelHandlerContext ctx, Response response) {
-        ProxySession proxySession = (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
+        ProxySession proxySession = ctx.channel().attr(Utils.sessionAttributeKey).get();
         Map<String, String> values = gson.fromJson(response.getResponseBody(), type);
 
-        proxySession.setPicture(values.get("picture"))
-                .setEmail(values.get("email"))
-                .authenticate();
+        GUser user = GUser.of(values.get("name"), values.get("email"), values.get("picture"));
+
+        proxySession.setAttribute("user", user)
+                    .authenticate();
     }
 
     private void writeRedirectResponse(ChannelHandlerContext ctx, ManagedHttpRequest request) {
@@ -106,6 +108,8 @@ public class OpenIDAuthHandler extends ChannelInboundHandlerAdapter {
 
         ctx.writeAndFlush(response);
     }
+
+
 
     private String getParameter(String from, String param) {
         Map<String, String> params = Arrays.stream(from.split("&"))

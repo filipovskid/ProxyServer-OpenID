@@ -1,6 +1,6 @@
 package com.filipovski.server.utils;
 
-import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.models.ProxySession;
 import io.netty.util.AttributeKey;
 import org.apache.http.client.utils.URIBuilder;
 
