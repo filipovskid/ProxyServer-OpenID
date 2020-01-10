@@ -13,6 +13,8 @@ public class Utils {
     public static final AttributeKey<AppConfig> configAttributeKey = AttributeKey.valueOf("config");
     public static final String proxySessionName = "poidSESSION";
     public static final AttributeKey<ProxySession> sessionAttributeKey  = AttributeKey.valueOf("session");
+    public static final AttributeKey<Map<String, ProxySession>> sessionContainerAttributeKey  =
+            AttributeKey.valueOf("session-container");
     public static final String basicUrl = "http://localhost:6555";
     public static final String foreignCaptiveEndpoint = "/oid-proxy.oid/proxy";
 

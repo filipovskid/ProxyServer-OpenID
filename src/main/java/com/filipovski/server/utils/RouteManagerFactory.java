@@ -158,4 +158,17 @@ public final class RouteManagerFactory {
             ctx.fireChannelRead(ReferenceCountUtil.retain(request));
         });
     }
+
+    public static RouteManager logoutManager() {
+        return ((ctx, request, queryParams) -> {
+            ProxySession proxySession = ctx.channel().attr(Utils.sessionAttributeKey).get();
+            proxySession.invalidate(ctx);
+
+            DefaultFullHttpResponse response =
+                    new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
+            HttpUtil.setContentLength(response, 0);
+
+            ctx.writeAndFlush(response);
+        });
+    }
 }

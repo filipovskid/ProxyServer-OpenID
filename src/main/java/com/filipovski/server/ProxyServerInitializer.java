@@ -30,14 +30,15 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
 				.GET("/login", RouteManagerFactory.loginFileRouter("static/single_login.html"))
 				.GET("/code", RouteManagerFactory.openidAuthManager())
 				.GET("/auth", RouteManagerFactory.authRedirectManager())
-				.GET("/profile", RouteManagerFactory.profileFileRouter("static/profile.html"));
+				.GET("/profile", RouteManagerFactory.profileFileRouter("static/profile.html"))
+				.GET("/logout", RouteManagerFactory.logoutManager());
 //				.notFound(FileRouteManager.of("/static/bad.html"));
 
 		Router<RouteManager> foreignRouter = new Router<RouteManager>()
 				.GET(Utils.foreignCaptiveEndpoint, RouteManagerFactory.foreignRedirectManager())
 				.notFound(RouteManagerFactory.foreignDefaultManager());
 
-		ch.attr(AttributeKey.valueOf("session-container")).set(this.sessionContainer);
+		ch.attr(Utils.sessionContainerAttributeKey).set(this.sessionContainer);
 		ch.attr(Utils.configAttributeKey).set(this.config);
 
 		ch.pipeline()

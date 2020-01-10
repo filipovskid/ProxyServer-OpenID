@@ -1,11 +1,15 @@
 package com.filipovski.server.models;
 
+import com.filipovski.server.utils.Utils;
+import io.netty.channel.ChannelHandlerContext;
+
 import java.util.Map;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ProxySession {
+    private Map<String, ProxySession> sessionContainer;
     private Map<String, Object> attributes;
     private String sessionId;
     private boolean newSession;
@@ -18,9 +22,16 @@ public class ProxySession {
         this.authenticated = false;
     }
 
-    public static ProxySession of(String sessionId) {
-        return new ProxySession(sessionId);
+    public static ProxySession of(Map<String, ProxySession> sessionContainer, String sessionId) {
+        ProxySession proxySession = new ProxySession(sessionId);
+        proxySession.sessionContainer = sessionContainer;
+
+        return proxySession;
     }
+
+//    public static ProxySession of(String sessionId) {
+//        return new ProxySession(sessionId);
+//    }
 
     public Map<String, Object> getState() {
         return this.attributes;
@@ -28,6 +39,11 @@ public class ProxySession {
 
     public synchronized void resetState() {
         this.attributes = new ConcurrentHashMap<>();
+    }
+
+    public synchronized  void invalidate(ChannelHandlerContext ctx) {
+        this.authenticated = false;
+        this.sessionContainer.remove(this.getSessionId());
     }
 
     public synchronized ProxySession setAttribute(String key, Object value) {

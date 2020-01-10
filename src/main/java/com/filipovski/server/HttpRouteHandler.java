@@ -113,7 +113,7 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 		// Creater new session
 		String sessionId = UUID.randomUUID().toString();
-		ProxySession proxySession = ProxySession.of(sessionId);
+		ProxySession proxySession = ProxySession.of(sessionContainer, sessionId);
 
 		return proxySession;
 	}
