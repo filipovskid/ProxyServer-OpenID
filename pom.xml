@@ -5,26 +5,13 @@
 	<groupId>com.filipovski</groupId>
 	<artifactId>proxy-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<!-- <properties> <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
-		<maven.compiler.source>1.8</maven.compiler.source> <maven.compiler.target>1.8</maven.compiler.target> 
-		<tcnative.artifactId>netty-tcnative-boringssl-static</tcnative.artifactId> 
-		<tcnative.version>2.0.0.Final</tcnative.version> <tcnative.classifier>${os.detected.classifier}</tcnative.classifier> 
-		</properties> <dependencies> <dependency> <groupId>io.netty</groupId> <artifactId>netty-all</artifactId> 
-		<version>4.1.39.Final</version> </dependency> <dependency> <groupId>io.netty</groupId> 
-		<artifactId>${tcnative.artifactId}</artifactId> <version>${tcnative.version}</version> 
-		</dependency> <dependency> <groupId>org.eclipse.jetty.alpn</groupId> <artifactId>alpn-api</artifactId> 
-		<version>1.1.3.v20160715</version> <scope>provided</scope> </dependency> 
-		</dependencies> -->
-
-	<!-- <modelVersion>4.0.0</modelVersion> <groupId>com.github.chhsiaoninety</groupId> 
-		<artifactId>nitmproxy</artifactId> <version>1.0-SNAPSHOT</version> -->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<netty.version>4.1.9.Final</netty.version>
+		<netty.version>4.1.42.Final</netty.version>
 		<tcnative.artifactId>netty-tcnative-boringssl-static</tcnative.artifactId>
-		<tcnative.version>2.0.0.Beta7</tcnative.version>
+		<tcnative.version>2.0.25.Final</tcnative.version>
 		<tcnative.classifier>${os.detected.classifier}</tcnative.classifier>
 		<guava.version>20.0</guava.version>
 		<logback.version>1.2.1</logback.version>
@@ -37,7 +24,7 @@
 		<argLine.alpnAgent>-javaagent:${jetty.alpnAgent.path}</argLine.alpnAgent>
 		<argLine.leak>-D_</argLine.leak>
 		<argLine.coverage>-D_</argLine.coverage>
-		<!-- <main.class>com.github.chhsiaoninety.nitmproxy.NitmProxy</main.class> -->
+		<main.class>package com.filipovski.server.ProxyServer</main.class>
 	</properties>
 
 	<build>
@@ -52,7 +39,7 @@
 						-classpath %classpath
 						${argLine.leak}
 						${main.class}
-						${main.args}
+<!--						${main.args}-->
 						-Djavax.net.debug=all
 					</commandlineArgs>
 				</configuration>
@@ -80,32 +67,32 @@
 					-Dio.netty.leakDetection.maxRecords=32</argLine.leak>
 			</properties>
 		</profile>
-		<profile>
-			<id>coverage</id>
-			<properties>
-				<argLine.coverage>${jacoco.argLine}</argLine.coverage>
-			</properties>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>0.7.7.201606060606</version>
-						<executions>
-							<execution>
-								<id>jacoco-prepare-agent</id>
-								<goals>
-									<goal>prepare-agent</goal>
-								</goals>
-								<configuration>
-									<propertyName>jacoco.argLine</propertyName>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
+<!--		<profile>-->
+<!--			<id>coverage</id>-->
+<!--			<properties>-->
+<!--				<argLine.coverage>${jacoco.argLine}</argLine.coverage>-->
+<!--			</properties>-->
+<!--			<build>-->
+<!--				<plugins>-->
+<!--					<plugin>-->
+<!--						<groupId>org.jacoco</groupId>-->
+<!--						<artifactId>jacoco-maven-plugin</artifactId>-->
+<!--						<version>0.7.7.201606060606</version>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>jacoco-prepare-agent</id>-->
+<!--								<goals>-->
+<!--									<goal>prepare-agent</goal>-->
+<!--								</goals>-->
+<!--								<configuration>-->
+<!--									<propertyName>jacoco.argLine</propertyName>-->
+<!--								</configuration>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--					</plugin>-->
+<!--				</plugins>-->
+<!--			</build>-->
+<!--		</profile>-->
 	</profiles>
 	<dependencies>
 		<dependency>
@@ -160,5 +147,22 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.5.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.asynchttpclient</groupId>
+			<artifactId>async-http-client</artifactId>
+			<version>2.10.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<version>1.25</version>
+		</dependency>
+
 	</dependencies>
 </project>

@@ -46,9 +46,7 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		if (connection.getServerAddress().getPort() == 443) {
-			System.out.println("TLS added ! Client: " + client);
 			SslHandler sslHandler = sslCtx().newHandler(ctx.alloc());
-			
 			
 			ctx.pipeline()
 				.addBefore(ctx.name(), "sslHandler", sslHandler);
@@ -58,11 +56,6 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
 		else
 			configureHttpHandlers(ctx,
 					(context, handler) -> context.pipeline().replace(context.name(), null, handler));
-		
-//		configureHttpHandlers(ctx, 
-//				(context, handler) -> context.pipeline().replace(context.name(), null, handler));
-		
-//		System.out.println("TLS pipeline: " + ctx.pipeline());
 	}
 	
 	private void configureHttpHandlers(ChannelHandlerContext ctx, 
@@ -73,9 +66,6 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
 		else {
 			handlerConsumer.accept(ctx, new ProxyBackendHandler(connection, channel));
 		}
-		
-//		System.out.println("Ctx: " + ctx.name());
-//		System.out.println("CH: " + channel.toString());
 	}
 	
 	private SslContext sslCtx() throws SSLException, CertificateException {
@@ -96,7 +86,7 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
                         Protocol.ALPN,
                         SelectorFailureBehavior.NO_ADVERTISE,
                         SelectedListenerFailureBehavior.ACCEPT,
-                        ApplicationProtocolNames.HTTP_2,
+//                        ApplicationProtocolNames.HTTP_2,
                         ApplicationProtocolNames.HTTP_1_1))
                 .build();
 	}
@@ -108,7 +98,7 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
                         Protocol.ALPN,
                         SelectorFailureBehavior.NO_ADVERTISE,
                         SelectedListenerFailureBehavior.ACCEPT,
-                        ApplicationProtocolNames.HTTP_2,
+//                        ApplicationProtocolNames.HTTP_2,
                         ApplicationProtocolNames.HTTP_1_1))
 //        		.trustManager(InsecureTrustManagerFactory.INSTANCE)
         		.build();
@@ -116,14 +106,12 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
 	
 	@Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		System.out.println("TLS removed. Client: " + client);
         flushPendings(ctx);
         ctx.flush();
     }
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    	System.out.println("TLS - write");
         synchronized (pendings) {
             pendings.add(msg);
         }
@@ -135,13 +123,11 @@ public class TlsHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    	System.out.println("Channel closed - exception");
     	channel.close();
         ctx.close();
     }
 
     private void flushPendings(ChannelHandlerContext ctx) {
-    	System.out.println("Flush pendings !");
         synchronized (pendings) {
             Iterator<Object> iterator = pendings.iterator();
             while (iterator.hasNext()) {
