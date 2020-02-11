@@ -1,6 +1,6 @@
 package com.filipovski.server.utils;
 
-import com.filipovski.server.authentication.ManagedHttpRequest;
+import com.filipovski.server.models.ManagedHttpRequest;
 import com.filipovski.server.authentication.OpenIDAuthHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;

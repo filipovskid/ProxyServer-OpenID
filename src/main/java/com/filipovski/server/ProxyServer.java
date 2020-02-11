@@ -1,6 +1,6 @@
 package com.filipovski.server;
 
-import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.models.ProxySession;
 import com.filipovski.server.utils.AppConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;

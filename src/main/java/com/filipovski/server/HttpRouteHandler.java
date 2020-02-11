@@ -1,6 +1,6 @@
 package com.filipovski.server;
 
-import com.filipovski.server.authentication.ProxySession;
+import com.filipovski.server.models.ProxySession;
 import com.filipovski.server.utils.RouteManager;
 import com.filipovski.server.utils.Utils;
 import io.netty.channel.ChannelHandlerContext;
@@ -13,13 +13,10 @@ import io.netty.handler.codec.http.router.RouteResult;
 import io.netty.handler.codec.http.router.Router;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.AttributeKey;
-import io.netty.util.ReferenceCountUtil;
-import org.asynchttpclient.uri.Uri;
 
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -79,8 +76,6 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 	private ProxySession attachSession(ChannelHandlerContext ctx, FullHttpRequest request,
 									   Map<String, List<String>> queryParams) {
-//		if(ctx.channel().hasAttr(Utils.sessionAttributeKey))
-//			return (ProxySession) ctx.channel().attr(Utils.sessionAttributeKey).get();
 
 		Map<String, ProxySession> sessionContainer = (Map<String, ProxySession>) ctx.channel()
 				.attr(AttributeKey.valueOf("session-container")).get();
@@ -118,7 +113,7 @@ public class HttpRouteHandler extends SimpleChannelInboundHandler<FullHttpReques
 
 		// Creater new session
 		String sessionId = UUID.randomUUID().toString();
-		ProxySession proxySession = ProxySession.of(sessionId);
+		ProxySession proxySession = ProxySession.of(sessionContainer, sessionId);
 
 		return proxySession;
 	}

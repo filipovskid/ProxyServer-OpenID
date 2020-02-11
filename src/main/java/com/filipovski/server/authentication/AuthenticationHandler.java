@@ -1,11 +1,10 @@
 package com.filipovski.server.authentication;
 
+import com.filipovski.server.models.ProxySession;
 import com.filipovski.server.utils.Utils;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
