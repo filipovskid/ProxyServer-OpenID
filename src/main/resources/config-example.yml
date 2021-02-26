@@ -1,0 +1,11 @@
+port: 6555
+host: "localhost"
+
+client_id: "173786..e0n1.apps.googleusercontent.com"
+client_secret: "mS9..WiNE"
+redirect_uri: "http://localhost:6555/code"
+
+discovery_document: "https://accounts.google.com/.well-known/openid-configuration"
+authorization_endpoint: "https://accounts.google.com/.well-known/openid-configuration"
+token_endpoint: "https://oauth2.googleapis.com/token"
+userinfo_endpoint: "https://openidconnect.googleapis.com/v1/userinfo"
