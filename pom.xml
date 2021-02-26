@@ -29,21 +29,21 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>kr.motd.maven</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<configuration>
-					<executable>${java.home}/bin/java</executable>
-					<commandlineArgs>
-						${argLine.alpnAgent}
-						-classpath %classpath
-						${argLine.leak}
-						${main.class}
-<!--						${main.args}-->
-						-Djavax.net.debug=all
-					</commandlineArgs>
-				</configuration>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>kr.motd.maven</groupId>-->
+<!--				<artifactId>exec-maven-plugin</artifactId>-->
+<!--				<configuration>-->
+<!--					<executable>${java.home}/bin/java</executable>-->
+<!--					<commandlineArgs>-->
+<!--						${argLine.alpnAgent}-->
+<!--						-classpath %classpath-->
+<!--						${argLine.leak}-->
+<!--						${main.class}-->
+<!--&lt;!&ndash;						${main.args}&ndash;&gt;-->
+<!--						-Djavax.net.debug=all-->
+<!--					</commandlineArgs>-->
+<!--				</configuration>-->
+<!--			</plugin>-->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
@@ -162,6 +162,11 @@
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
 			<version>1.25</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.1</version>
 		</dependency>
 
 	</dependencies>
