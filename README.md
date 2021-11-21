@@ -19,8 +19,9 @@ The proxy server was implemented using Netty. Netty is an efford to provide an a
 The handlers in a channel pipeline are visualized below.
 
 <p align="center">
-  <img src = "https://i.imgur.com/4SsIml2.png" />
+  <img alt="Proxy server's channel pipeline and its handlers" src="docs/OIDPS_ChannelPipeline_v2.0.png" />
 </p>
+<!-- ![Proxy server's channel pipeline and its handlers](docs/OIDPS_ChannelPipeline_v2.0.png) -->
 
 ## Authentication Flow
 
@@ -29,14 +30,16 @@ This project focuses on implementing a proxy server which requires an authentica
 The authentication flow is shown below.
 
 <p align="center">
-  <img src="https://i.imgur.com/htEELcM.png" />
+  <img alt="The proxy server authentication flow" src="docs/proxy_server_auth_v2.0.png" />
 </p>
+<!-- ![The proxy server authentication flow](docs/proxy_server_auth_v2.0.png) -->
 
 ### OpenID Connect Flow
 
 <p align="center">
-  <img src="https://i.imgur.com/1ljR84l.png" />
+  <img alt="OpenID Connect authentication flow" src="docs/openID_connect_v2.0.png" />
 </p>
+<!-- ![OpenID Connect authentication flow](docs/openID_connect_v2.0.png) -->
 
 ## Build Project
 
